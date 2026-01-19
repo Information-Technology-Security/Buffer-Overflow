@@ -65,259 +65,293 @@
 
 # Project Overview
 
-This project investigates the potential relationship between socio-economic factors—specifically unemployment and poverty rates and incidents of police killings across various U.S. states between 2015 and 2016
+This project presents a comprehensive study of **buffer overflow vulnerabilities**. It combines theoretical analysis of memory management with a practical laboratory walkthrough demonstrating both **exploitation** and **mitigation** of stack-based buffer overflows.
+
+The goal is to understand how buffer overflows occur, how they can be exploited in controlled environments, and how modern operating systems defend against them.
 
 ---
 
 ## Table of Contents
 
-| Section | Folder | Description |
-|------:|--------|-------------|
-| 1 | `assign/` | Assignment material for the Business Data & Management course |
-| 1.1 | `assign/Assignment-BDMGMT-Apr24.pdf` | Assignment description in English |
-| 1.2 | `assign/Εργασία-ΔΧΜΚ-Απρ24.pdf` | Assignment description in Greek |
-| 2 | `docs/` | Documentation and reports on US police killings |
-| 2.1 | `docs/Police-Killings-US.pdf` | English report |
-| 2.2 | `docs/Δολοφονίες-Αστυνομικών-ΗΠΑ.pdf` | Greek report |
-| 3 | `graphs/` | Visualizations and charts of datasets |
-| 3.1 | `graphs/2015-*.png` | Various 2015 charts: elbow method, optimal clusters, percentages, logs |
-| 3.2 | `graphs/2016-*.png` | Various 2016 charts: elbow method, optimal clusters, percentages, logs |
-| 3.3 | `graphs/avg-*.png` | Average charts across years |
-| 3.4 | `graphs/Clustering3-*.png` | Charts for 3-dataset clustering experiments |
-| 4 | `src/` | Source code, datasets, and notebooks |
-| 4.1 | `src/datasets/` | Raw datasets in CSV and JSON formats |
-| 4.2 | `src/jupyter/` | Jupyter notebooks for analysis and preprocessing |
-| 4.3 | `src/processed_datasets/` | Cleaned and processed datasets |
-| 4.4 | `src/python/` | Python scripts for clustering and preprocessing |
-| 5 | `README.md` | Repository overview, instructions, and summary |
+| Section | Path / File | Description |
+|--------:|-------------|-------------|
+| 1 | `assign/` | Official laboratory exercise specifications |
+| 1.1 | `assign/Exercise 1 (Buffer Overflow) - THEORETICAL PART.pdf` | Assignment description – theoretical part (English) |
+| 1.2 | `assign/Exercise 1 (Buffer Overflow) - PRACTICAL PART.pdf` | Assignment description – practical part (English) |
+| 1.3 | `assign/Άσκηση 1 (Buffer Overflow) - ΘΕΩΡΗΤΙΚΟ ΜΕΡΟΣ_2023.pdf` | Assignment description – theoretical part (Greek) |
+| 1.4 | `assign/Άσκηση 1 (Buffer Overflow) - ΠΡΑΚΤΙΚΟ ΜΕΡΟΣ_2023.pdf` | Assignment description – practical part (Greek) |
+| 2 | `docs/` | Project reports and analysis |
+| 2.1 | `docs/Buffer-Overflow.pdf` | Technical report (English) |
+| 2.2 | `docs/Υπερχείλιση-Ενδιάμεσης-Μνήμης.pdf` | Technical report (Greek) |
+| 3 | `src/` | Vulnerable programs and exploit source code |
+| 3.1 | `src/stack.c` | Vulnerable stack-based buffer overflow program |
+| 3.2 | `src/shellcode.c` | Shellcode implementation |
+| 3.3 | `src/dash_shellcode.c` | Shellcode adapted for dash shell |
+| 3.4 | `src/exploit.c` | Exploit construction and payload generation |
+| 4 | `figs/` | Diagrams and theoretical illustrations |
+| 5 | `screens/` | Experimental screenshots and attack validation |
+| 5.1 | `screens/Activity1–8/` | Step-by-step evidence for each lab activity |
+| 6 | `README.md` | Repository overview and execution notes |
 
-## Project Overview
+## Theoretical Background
 
-The research explores whether states with higher levels of unemployment and poverty also exhibit higher frequencies of police brutality. By grouping data into clusters, the study seeks to identify patterns and correlations that can inform social policy and crime understanding.
+### Memory Structure
+The project analyzes how a program’s memory is organized and where vulnerabilities may arise:
 
----
+- **Text Segment**: Stores executable program code.  
+- **Data Segment**: Stores initialized global and static variables.  
+- **BSS Segment**: Stores uninitialized global and static variables.  
+- **Heap**: Used for dynamic memory allocation (e.g., `malloc()`).
+- **Stack**: Stores local variables, function arguments, return addresses, and stack frames.
 
-## Key Objectives
+### Stack Frames
+Each function call creates a **stack frame** containing:
+- Function arguments  
+- Return Address  
+- Previous Frame Pointer  
+- Local variables  
 
-- **Correlation Analysis**  
-  Investigating whether unemployment rates correlate with homicide incidents.
-
-- **Pattern Detection**  
-  Using clustering techniques to observe geographical and economic patterns in police killings.
-
-- **Policy Support**  
-  Providing data-driven insights for sociologists, economists, and policymakers to address social issues.
-
----
-
-## Datasets
-
-The analysis utilizes three primary datasets sourced from platforms such as **Kaggle** and **Opendatasoft**:
-
-- **Police Killings Dataset**  
-  Includes data on victims (age, sex, race), location (state/city), cause of death, and whether body cameras were used.
-
-- **Unemployment / Poverty Dataset**  
-  Contains poverty rates and absolute numbers of unemployed individuals per state.
-
-- **US City Populations Dataset**  
-  Experimental data for cities with more than 65,000 inhabitants, used to normalize results against total state populations.
+### The Vulnerability
+A **buffer overflow** occurs when a program writes more data to a buffer than it can hold.  
+In stack-based overflows, this can overwrite the **Return Address**, allowing an attacker to redirect execution to malicious code (shellcode).
 
 ---
 
-## Methodology
+## Practical Implementation
 
-The team employed **Cluster Analysis** using the **K-Means algorithm**. This method was chosen for its efficiency with relatively small datasets (51 entries) and its ability to detect hidden patterns without requiring pre-labeled data.
+The laboratory exercise demonstrates a buffer overflow attack in a controlled environment.
 
----
+### Initial Setup
+- **ASLR disabled** to make memory addresses predictable.
 
-## Data Preprocessing
+### Shellcode Development
+- A machine-level payload (`shellcode.c`) was developed to execute `/bin/sh`, granting a command shell.
 
-- **Time Alignment**  
-  Data was pruned to include only the years **2015 and 2016** to ensure a common temporal scale.
+### Vulnerable Program
+- A C program (`stack.c`) was created using the unsafe `strcpy()` function, which does not perform bounds checking.
 
-- **Morphology Normalization**  
-  State names were standardized to abbreviations (e.g., *New York → NY*) to enable successful dataset joining.
-
-- **Normalization**  
-  Logarithmic normalization and standard deviation scaling were applied to account for significant differences in population size between states.
-
-- **Handling Data Gaps**  
-  States with zero recorded murders (e.g., *Rhode Island in 2015*) were manually assigned a value of `0` rather than being omitted.
-
----
-
-## Evaluation Metrics
-
-To assess cluster quality, the following non-predictive evaluation metrics were used:
-
-- **SSE (Sum of Squared Error)**  
-  Measures the deviation of actual values from cluster centroids, indicating how close data points are within clusters.
-
-- **Silhouette Coefficient**  
-  Measures how well data points are separated between clusters; values closer to `1` indicate better clustering.
+### Exploit Creation
+- An exploit utility (`exploit.c`) generates a `badfile` containing:
+  - **NOP Sled**: A sequence of `0x90` instructions to increase exploit reliability.
+  - **Shellcode**: The malicious payload.
+  - **Modified Return Address**: Redirects execution back into the buffer where the shellcode resides.
 
 ---
 
 ## Experimental Results
 
-The analysis was conducted in **four distinct stages**, progressing from percentage-based metrics to log-normalized absolute values to improve accuracy.
+### Successful Exploitation
+- By correctly calculating memory offsets and addresses, the exploit successfully redirected execution flow and spawned a shell with **root privileges (`#`)**.
 
-| Analysis Stage       | Metric      | Year 2015 | Year 2016 |
-|----------------------|-------------|-----------|-----------|
-| Percentage Rates     | SSE         | 25,464    | 29,151    |
-|                      | Silhouette  | 0.518     | 0.495     |
-| Net Numbers          | SSE         | 18,885    | 19,478    |
-|                      | Silhouette  | 0.481     | 0.484     |
-| Log Normalized       | SSE         | 22,391    | —         |
-|                      | Silhouette  | 0.554     | —         |
+### Countermeasure Testing
+The effectiveness of modern defenses was evaluated:
 
----
+- **Stack Guard**  
+  - Detected stack corruption and terminated execution  
+  - Error: *“stack smashing detected”*
 
+- **Non-Executable Stack (NX)**  
+  - Prevented execution of stack-resident code  
+  - Resulted in a *Segmentation Fault* instead of a shell
 
-## Technologies Used
-
-- **Programming Language:** Python 3  
-- **Data Analysis & Machine Learning:**  
-  - K-Means Clustering (Unsupervised Learning)  
-  - Z-score Normalization  
-  - Logarithmic Normalization  
-- **Big Data & Statistical Concepts:**  
-  - Cluster Analysis  
-  - Socio-economic Data Correlation  
-  - Population Normalization Factors  
-- **Data Structures:**  
-  - Pandas DataFrames  
-  - NumPy Arrays  
-- **Libraries & Frameworks:**  
-  - `pandas` (data loading, preprocessing, merging)  
-  - `numpy` (numerical operations, transformations)  
-  - `scikit-learn` (KMeans, Silhouette Coefficient, SSE)  
-  - `scipy` (`zscore` normalization)  
-  - `matplotlib` (data visualization)  
-  - `json` (US states name mapping)  
-  - `os` (console handling)  
-- **Development Environment:**  
-  - Python scripts (`.py`)  
-  - Jupyter Notebooks (`.ipynb`)  
+- **Address Space Layout Randomization (ASLR)**  
+  - Randomized memory addresses  
+  - Made reliable exploitation significantly more difficult
 
 ---
 
-# Installation & Run Guide
+## Conclusion
+This project demonstrates that **buffer overflows remain a critical security threat**, but modern operating system defenses, such as **ASLR**, **Stack Guards**, and **Non-Executable Stacks**, provide multiple layers of protection. While not foolproof individually, these mechanisms together greatly increase the complexity and difficulty of successful exploitation.
+
+---
+
+# Installation & Setup Guide  
+
+This guide explains how to **set up, compile, and execute** the Buffer Overflow laboratory project in a **controlled environment** for educational purposes.
+
+> **Warning**  
+> This project intentionally disables security mechanisms and demonstrates exploitation techniques.  
+> **Run ONLY on a virtual machine or isolated lab environment. Never on a production system.**
+
+---
 
 ## Prerequisites
 
-This project requires **Python 3** to be installed on your system.
+### 1. Operating System (Mandatory)
 
-Verify your Python installation by running:
+- **SEED Ubuntu 16.04 (32-bit)**
+- Provided by the **SEED Security Labs** project
+- Preconfigured for security experimentation
+
+> This project is **fully compatible** with the SEED 16.04 (x86) environment.
+
+---
+
+### 2. Virtualization (Strongly Recommended)
+
+Use a Virtual Machine for safety:
+
+- **VirtualBox** or **VMware**
+- Ubuntu ISO installed inside the VM
+
+---
+
+### 3. Required Software & Tools
+
+Install the following packages:
+
 ```bash
-python --version
+sudo apt update
+sudo apt install -y \
+  build-essential \
+  gcc \
+  gdb \
+  make \
+  vim \
+  hexedit
 ```
-or
+Optional (for debugging & analysis):
+
 ```bash
-python3 --version
+sudo apt install -y gdb-multiarch
 ```
-If Python is not installed, download it from:
 
-https://www.python.org/downloads/
+---
 
-Additionally, install the required Python libraries:
-
+## System Configuration (Lab Mode)
+### 1. Disable ASLR (Required)
+ASLR must be disabled to make memory addresses predictable:
 ```bash
-pip install pandas numpy scikit-learn scipy matplotlib
+sudo sysctl -w kernel.randomize_va_space=0
 ```
+Verify:
+```bash
+cat /proc/sys/kernel/randomize_va_space
+```
+Expected output:
+```bash
+0
+```
+To re-enable ASLR later:
+```bash
+sudo sysctl -w kernel.randomize_va_space=2
+```
+
+### 2. Disable Stack Protections (Compile-Time)
+During compilation, stack protection and NX must be disabled manually (see below).
+
+---
 
 ## Installation
-Clone the repository to your local machine:
-
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/Big-Data-Management-aka-Uniwa/US-Police-Killing-Search.git
+git clone https://github.com/Information-Technology-Security/Buffer-Overflow.git
+cd Buffer-Overflow/src
 ```
 
-Navigate to the project directory:
+---
+
+## Compilation Instructions
+### 1. Compile the Vulnerable Program
 ```bash
-cd US-Police-Killing-Search/src/python
+gcc -fno-stack-protector -z execstack -no-pie stack.c -o stack
 ```
+Flags explained:
+- `-fno-stack-protector` → disables stack canaries
+- `-z execstack` → makes stack executable
+- `-no-pie` → disables position-independent execution
 
-Ensure the following folder structure exists:
-
-```
-datasets/
-processed_datasets/
-```
-
-## Data Preprocessing
-Before running the clustering experiments, preprocess the raw datasets:
-
+### 2. Compile the Shellcode
 ```bash
-python preprocessData.py
+gcc -fno-stack-protector -z execstack shellcode.c -o shellcode
 ```
-
-This step:
-- Filters police killing and poverty data for 2015–2016
-- Normalizes U.S. state names to two-letter abbreviations
-- Computes population statistics
-- Produces cleaned datasets in processed_datasets/
-- Generates average datasets for 2015–2016
-
-### Run Clustering (2 Datasets)
-Execute clustering using Police Killings & Poverty datasets:
-
+Optional (dash shell version):
 ```bash
-python Clustering_2_Datasets.py
+gcc -fno-stack-protector -z execstack dash_shellcode.c -o dash_shellcode
 ```
-You will be prompted to select:
-- Year (2015 / 2016 / Average)
-- Data representation (rates, absolute numbers, logarithmic normalization)
-- Number of clusters (k)
 
-The program outputs:
-- Cluster visualizations
-- SSE (Sum of Squared Errors)
-- Silhouette Coefficient
-- Elbow Method plot for optimal k
-
-## Run Clustering (3 Datasets)
-Execute clustering with Police Killings, Poverty, and Population normalization:
-
+### 3. Compile the Exploit Generator
 ```bash
-python Clustering_3_Datasets.py
+gcc exploit.c -o exploit
 ```
-This version:
-- Normalizes killings and poverty by total state population
-- Performs K-Means clustering
-- Visualizes clusters and centroids
-- Reports SSE and Silhouette metrics
 
-## Jupyter Notebook Support
-All source files are also implemented as Jupyter Notebooks (.ipynb), allowing:
-- Interactive execution
-- Step-by-step analysis
-- Inline visualizations
-
-Launch Jupyter Notebook with:
+--- 
+ 
+## Running the Exploit (Controlled Lab)
+### 1. Generate the Malicious Input File
 ```bash
-jupyter notebook
+./exploit
 ```
-
-Then open the corresponding .ipynb files by navigating to project directory
-
-Navigate to the project directory:
+This creates a file named:
 ```bash
-cd US-Police-Killing-Search/src/jupyter
+badfile
+```
+Containing:
+- NOP sled
+- Shellcode
+- Overwritten return address
+
+### 2. Execute the Vulnerable Program
+```bash
+./stack
+```
+If successful, you should obtain a shell:
+```bash
+#
+```
+This confirms successful stack-based buffer overflow exploitation.
+
+---
+
+## Testing Security Countermeasures
+### 1. Stack Guard (Canaries)
+Recompile without disabling stack protection:
+```bash
+gcc stack.c -o stack_protected
+```
+Run:
+```bash
+./stack_protected
+```
+Expected output:
+```bash
+*** stack smashing detected ***
 ```
 
-## Output
-- Cluster scatter plots with centroids
-- Quantitative clustering metrics (SSE, Silhouette Coefficient)
-- CSV files containing processed and merged datasets
+### 2. Non-Executable Stack (NX)
+Compile without executable stack:
+```bash
+gcc -fno-stack-protector stack.c -o stack_nx
+```
+Expected behavior:
+```bash
+Segmentation fault
+```
 
-The analysis terminates after all clusters and evaluation metrics are displayed.
+### 3. ASLR Enabled
+Enable ASLR again:
+```bash
+sudo sysctl -w kernel.randomize_va_space=2
+```
+Re-run exploit → Exploit fails unpredictably
+
+---
+
+## Troubleshooting
+### Exploit fails
+- Verify ASLR is disabled
+- Check compiler flags
+- Confirm correct return address offset
+
+### Segmentation fault
+- NX enabled
+- Wrong memory offset
+- Incorrect shellcode placement
 
 ---
 
 ## Open the Documentation
 1. Navigate to the `docs/` directory
 2. Open the report corresponding to your preferred language:
-    - English: `Police-Killings-US.pdf`
-    - Greek: `Δολοφονίες-Αστυνομικών-ΗΠΑ.pdf`
+    - English: `Buffer-Overflow.pdf`
+    - Greek: `Υπερχείλιση-Ενδιάμεσης-Μνήμης.pdf`
